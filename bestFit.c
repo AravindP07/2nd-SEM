@@ -1,88 +1,88 @@
 #include <stdio.h>
 
-// Structure to represent a process
+// Process structure
 struct Process {
-    int size;     // Size of the process
-    int flag;     // Allocation flag (0 = not allocated, 1 = allocated)
-    int holeId;   // ID of the hole to which the process is allocated
-} p[10];          // Array to hold up to 10 processes
+    int size;
+    int flag;      // 0 = not allocated, 1 = allocated
+    int holeIndex; // Index of the hole it was allocated to
+} processes[10];
 
-// Structure to represent a hole
+// Hole structure
 struct Hole {
-    int id;       // Unique ID of the hole
-    int size;     // Current available size of the hole (reduces after allocation)
-    int actual;   // Original size of the hole (for display purposes)
-} h[10];          // Array to hold up to 10 holes
+    int size;
+    int originalSize;
+    int id;
+} holes[10];
 
-// Function to sort holes in ascending order of available size
-void sortHoles(struct Hole h[], int n) {
-    for (int i = 0; i < n - 1; i++)
-        for (int j = i + 1; j < n; j++)
-            if (h[i].size > h[j].size) {
-                struct Hole temp = h[i];
-                h[i] = h[j];
-                h[j] = temp;
+// Sort holes by available size (ascending)
+void sortHoles(int count) {
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (holes[i].size > holes[j].size) {
+                struct Hole temp = holes[i];
+                holes[i] = holes[j];
+                holes[j] = temp;
             }
+        }
+    }
 }
 
 int main() {
-    int np, nh;
+    int numHoles, numProcesses;
 
-    // Input number of memory holes
-    printf("Enter number of Holes: ");
-    scanf("%d", &nh);
+    printf("Enter number of memory holes: ");
+    scanf("%d", &numHoles);
 
-    // Input size of each hole
-    for (int i = 0; i < nh; i++) {
-        printf("Size of hole H%d: ", i);
-        scanf("%d", &h[i].size);
-        h[i].actual = h[i].size;  // Store original size
-        h[i].id = i;              // Assign hole ID (In order to track the hole, even after rearrangement)
+    for (int i = 0; i < numHoles; i++) {
+        printf("Size of Hole H%d: ", i);
+        scanf("%d", &holes[i].size);
+        holes[i].originalSize = holes[i].size;
+        holes[i].id = i;
     }
 
-    // Input number of processes
-    printf("\nEnter number of Processes: ");
-    scanf("%d", &np);
+    printf("\nEnter number of processes: ");
+    scanf("%d", &numProcesses);
 
-    // Input size of each process
-    for (int i = 0; i < np; i++) {
-        printf("Size of process P%d: ", i);
-        scanf("%d", &p[i].size);
-        p[i].flag = 0;  // Mark as not allocated
+    for (int i = 0; i < numProcesses; i++) {
+        printf("Size of Process P%d: ", i);
+        scanf("%d", &processes[i].size);
+        processes[i].flag = 0;  // Mark as not allocated
     }
 
-    // Best Fit Allocation Logic
-    for (int i = 0; i < np; i++) {
-        sortHoles(h, nh);  // Sort holes before each allocation attempt
-
-        // Try to allocate the current process to the smallest suitable hole
-        for (int j = 0; j < nh; j++) {
-            if (!p[i].flag && p[i].size <= h[j].size) {
-                p[i].flag = 1;             // Mark process as allocated
-                p[i].holeId = h[j].id;     // Store the hole ID
-                h[j].size -= p[i].size;    // Reduce available size of the hole
+    // Best Fit Allocation
+    for (int i = 0; i < numProcesses; i++) {
+        sortHoles(numHoles);
+        for (int j = 0; j < numHoles; j++) {
+            if (!processes[i].flag && processes[i].size <= holes[j].size) {
+                processes[i].flag = 1;            // Mark as allocated
+                processes[i].holeIndex = holes[j].id;
+                holes[j].size -= processes[i].size;
+                break; // Allocate once
             }
         }
     }
 
-    // Display Allocation Table
-    printf("\n\tBest Fit Allocation\n");
-    printf("---------------------------------\n");
-    printf("Process\tSize\tAllocated Hole\n");
-    printf("---------------------------------\n");
-    for (int i = 0; i < np; i++) {
-        if (p[i].flag)
-            printf("P%d\t%d\tH%d\n", i, p[i].size, p[i].holeId);
+    // Allocation result
+    printf("\nBest Fit Allocation:\n");
+    printf("-----------------------------\n");
+    printf("Process\tSize\tHole\n");
+    printf("-----------------------------\n");
+    for (int i = 0; i < numProcesses; i++) {
+        if (processes[i].flag)
+            printf("P%d\t%d\tH%d\n", i, processes[i].size, processes[i].holeIndex);
         else
-            printf("P%d\t%d\tNot allocated\n", i, p[i].size);
+            printf("P%d\t%d\tNot Allocated\n", i, processes[i].size);
     }
 
-    // Display Final Hole Status
-    printf("\n---------------------------------\n");
-    printf("Hole\tActual\tAvailable\n");
-    printf("---------------------------------\n");
-    for (int i = 0; i < nh; i++)
-        printf("H%d\t%d\t%d\n", h[i].id, h[i].actual, h[i].size);
+    // Final hole status
+    printf("\nFinal Hole Status:\n");
+    printf("-----------------------------\n");
+    printf("Hole\tOriginal\tAvailable\n");
+    printf("-----------------------------\n");
+    for (int i = 0; i < numHoles; i++) {
+        printf("H%d\t%d\t\t%d\n", holes[i].id, holes[i].originalSize, holes[i].size);
+    }
 
     return 0;
 }
+
