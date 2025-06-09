@@ -2,45 +2,82 @@
 #include <stdlib.h>
 
 int main() {
-    FILE *fp;
-    char filename[100], content[1000];
+    char filename[100];
+    char content[1000];
+    FILE *filePtr;
     int choice;
 
-    while (1) {
-        printf("\nMenu:\n1. Write\n2. Append\n3. Display\n4. Exit\nChoose: ");
+    while(1) {
+        printf("\nFile Operations Menu:\n");
+        printf("1. Write to a file\n");
+        printf("2. Append to a file\n");
+        printf("3. Display file contents\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
         scanf("%d", &choice);
-        getchar(); // clear newline after number input
 
-        if (choice == 4) break;
+        switch(choice) {
+            case 1: // Write to file
+                printf("Enter filename: ");
+                scanf("%s", filename);
+                
+                printf("Enter content to write (max 1000 chars):\n");
+                getchar(); // Clear input buffer
+                fgets(content, sizeof(content), stdin);
+                
+                filePtr = fopen(filename, "w");
+                if(filePtr == NULL) {
+                    printf("Error opening file!\n");
+                    break;
+                }
+                
+                fprintf(filePtr, "%s", content);
+                fclose(filePtr);
+                printf("Content written successfully!\n");
+                break;
 
-        printf("Filename: ");
-        scanf("%s", filename);
-        getchar(); // clear newline
+            case 2: // Append to file
+                printf("Enter filename: ");
+                scanf("%s", filename);
+                
+                printf("Enter content to append (max 1000 chars):\n");
+                getchar(); // Clear input buffer
+                fgets(content, sizeof(content), stdin);
+                
+                filePtr = fopen(filename, "a");
+                if(filePtr == NULL) {
+                    printf("Error opening file!\n");
+                    break;
+                }
+                
+                fprintf(filePtr, "%s", content);
+                fclose(filePtr);
+                printf("Content appended successfully!\n");
+                break;
 
-        if (choice == 1 || choice == 2) {
-            printf("Enter content:\n");
-            fgets(content, sizeof(content), stdin);
-            fp = fopen(filename, (choice == 1) ? "w" : "a");
-            if (!fp) {
-                printf("Cannot open file!\n");
-                continue;
-            }
-            fputs(content, fp);
-            fclose(fp);
-            printf("Success!\n");
-        } else if (choice == 3) {
-            fp = fopen(filename, "r");
-            if (!fp) {
-                printf("Cannot open file!\n");
-                continue;
-            }
-            printf("\nContents:\n");
-            while (fgets(content, sizeof(content), fp)) {
-                printf("%s", content);
-            }
-            fclose(fp);
-        } else {
-            printf("Invalid choice.\n");
+            case 3: // Display file contents
+                printf("Enter filename: ");
+                scanf("%s", filename);
+                
+                filePtr = fopen(filename, "r");
+                if(filePtr == NULL) {
+                    printf("Error opening file!\n");
+                    break;
+                }
+                
+                printf("\nFile contents:\n");
+                while(fgets(content, sizeof(content), filePtr) != NULL) {
+                    printf("%s", content);
+                }
+                fclose(filePtr);
+                break;
+
+            case 4: // Exit
+                printf("Exiting program...\n");
+                exit(0);
+
+            default:
+                printf("Invalid choice! Try again.\n");
         }
     }
 
