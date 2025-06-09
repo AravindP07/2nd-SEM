@@ -1,99 +1,35 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define BUFFER_SIZE 1024
-
 int main() {
-    int server_sock, client_sock, n;
-    struct sockaddr_in server_addr, client_addr;
-    socklen_t client_len = sizeof(client_addr);
-    char buffer[BUFFER_SIZE];
-    FILE *file;
+    int sock, client, n;
+    struct sockaddr_in server, client_addr;
+    socklen_t len = sizeof(client_addr);
+    char buf[1024];
+    FILE *f;
 
-    // Create TCP socket
-    server_sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_sock == -1) {
-        perror("Socket creation failed");
-        return 1;
-    }
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(8888);
+    server.sin_addr.s_addr = INADDR_ANY;
 
-    // Configure server address
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    server_addr.sin_port = htons(8888);
+    bind(sock, (struct sockaddr*)&server, sizeof(server));
+    listen(sock, 1);
+    client = accept(sock, (struct sockaddr*)&client_addr, &len);
 
-    // Bind socket
-    if (bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Bind failed");
-        close(server_sock);
-        return 1;
-    }
+    n = recv(client, buf, sizeof(buf), 0);
+    buf[n] = '\0';
+    f = fopen(buf, "wb");
 
-    // Listen for incoming connections
-    if (listen(server_sock, 1) < 0) {
-        perror("Listen failed");
-        close(server_sock);
-        return 1;
-    }
+    while ((n = recv(client, buf, sizeof(buf), 0)) > 0)
+        fwrite(buf, 1, n, f);
 
-    printf("Server listening on port 8888...\n");
-
-    // Accept a client connection
-    client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &client_len);
-    if (client_sock < 0) {
-        perror("Accept failed");
-        close(server_sock);
-        return 1;
-    }
-
-    printf("Client connected.\n");
-
-    // Receive file name from client
-    n = recv(client_sock, buffer, BUFFER_SIZE - 1, 0);
-    if (n <= 0) {
-        perror("Receive failed");
-        close(client_sock);
-        close(server_sock);
-        return 1;
-    }
-    buffer[n] = '\0';  // Null-terminate the file name
-
-    printf("Receiving file: %s\n", buffer);
-
-    // Open file for writing
-    file = fopen(buffer, "wb");
-    if (!file) {
-        perror("File open failed");
-        close(client_sock);
-        close(server_sock);
-        return 1;
-    }
-
-    // Receive file data
-    while ((n = recv(client_sock, buffer, BUFFER_SIZE, 0)) > 0) {
-        if (fwrite(buffer, 1, n, file) < n) {
-            perror("File write failed");
-            break;
-        }
-    }
-
-    if (n < 0) {
-        perror("Receive failed");
-    }
-
-    printf("File received successfully.\n");
-
-    // Close file and sockets
-    fclose(file);
-    close(client_sock);
-    close(server_sock);
-
-    return 0;
+    fclose(f);
+    close(client);
+    close(sock);
 }
+
 
 
